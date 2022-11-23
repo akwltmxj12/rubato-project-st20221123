@@ -92,6 +92,20 @@
         </p>
         <form action="replyOk">
         <input type="hidden" name="rfbnum" value="${rfbView.rfbnum }">
+        
+		<p id="fileinfo">
+			※ 첨부 파일 :
+			<a href="${pageContext.request.contextPath}/resources/uploadfiles/${fileDto.filename}" download>
+			 ${fileDto.fileoriname }
+			 </a>
+        </p>
+        <c:if test="${fileDto.fileextension == 'jpg' or fileDto.fileextension == 'bmp' or fileDto.fileextension == 'png' or fileDto.fileextension == 'gif'}">
+        	<br>
+        	<img width="300" src="${pageContext.request.contextPath}/resources/uploadfiles/${fileDto.filename}">
+        	<br>
+        </c:if>
+        
+        <br>
         <!-- 해당글의 댓글 리스트 출력 -->
         <table border="1" cellpadding="0" cellspacing="0" width="750">
        	<c:forEach items="${replylist }" var="replyDto">

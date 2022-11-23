@@ -2,6 +2,7 @@ package pend.rubato.home.dao;
 
 import java.util.ArrayList;
 
+import pend.rubato.home.dto.FileDto;
 import pend.rubato.home.dto.RFBoardDto;
 import pend.rubato.home.dto.RMemberDto;
 import pend.rubato.home.dto.RReplyDto;
@@ -14,7 +15,7 @@ public interface IDao {
 	public int checkUserIdAndPw(String mid, String mpw);	// select
 	
 	// 게시판 관련
-	public void rfbwrite(String rfbname, String rfbtitle, String rfbcontent, String rfbuserid);	// insert
+	public void rfbwrite(String rfbname, String rfbtitle, String rfbcontent, String rfbuserid, int filecount);	// insert
 	public ArrayList<RFBoardDto> rfblist();	// 게시판 list, select
 	public int rfboardAllCount();	// 총 게시물 갯수 select
 	public RFBoardDto rfboardView(String rfbnum); // 게시물 내용 보기, 클릭한 게시물의 번호, select문 써야한다. 파라미터값이 넘어오면 문자열로 넘어온다. 그래서 매게변수가 String이된다.
@@ -33,4 +34,13 @@ public interface IDao {
 	public ArrayList<RFBoardDto> rfbSearchTitleList(String searchKey);	// 제목에서 찾기
 	public ArrayList<RFBoardDto> rfbSearchContentList(String searchKey);	// 내용에서 찾기
 	public ArrayList<RFBoardDto> rfbSearchWriterList(String searchKey);	// 글쓴이 에서 찾기
+	
+	// 파일 업로드 관련
+	public void fileInfoInsert(int boardnum, String fileoriname, String filename, String fileextension, String fileurl);
+	public ArrayList<RFBoardDto> boardLatestInfo(String rfbuserid);
+	//현재 파일이 첨부된 글로 쓴 아이디로 검색된 글 목록
+	public FileDto getFileInfo(String rfbnum);	//파일이 첨부된 게시글의 번호로 조회환 첨부된 파일의 모든 정보 dto
+	
+	
+	
 }

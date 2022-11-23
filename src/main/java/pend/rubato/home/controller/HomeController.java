@@ -18,9 +18,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import pend.rubato.home.dao.IDao;
+import pend.rubato.home.dto.FileDto;
 import pend.rubato.home.dto.RFBoardDto;
 import pend.rubato.home.dto.RReplyDto;
 
@@ -51,16 +53,18 @@ public class HomeController {
 
 		int boardSize = boardDtos.size(); // 전체 글의 개수
 		
-		if(boardSize >= 4) {
+		if(boardSize > 4) {
 			boardDtos = boardDtos.subList(0, 4);	
-		} else {
-			boardDtos = boardDtos.subList(0, boardSize+1);		
-		}	// 전체 글의 개수가 4개보다 작을때 : 만약 작게되면 인덱스 에러가 발생한다. 이 구문은 그것을 방지한다.
+		} 
+		//else {
+		//	boardDtos = boardDtos.subList(0, boardSize+1);		
+	//	}	// 전체 글의 개수가 4개보다 작을때 : 만약 작게되면 인덱스 에러가 발생한다. 이 구문은 그것을 방지한다.
 		
 		
 		model.addAttribute("latestDtos", boardDtos);
 		
 		return "index";
+		
 	//		boardDtos.get(0); // 가장 최근 글 첫번째
 //		boardDtos.get(1); // 가장 최근 글 두번째
 //		boardDtos.get(2); // 가장 최근 글 세번째
@@ -85,6 +89,7 @@ public class HomeController {
 		
 		ArrayList<RFBoardDto> boardDtos = dao.rfblist();
 		int boardCount = dao.rfboardAllCount();
+		
 		
 		model.addAttribute("boardList", boardDtos);
 		model.addAttribute("boardCount", boardCount);
@@ -116,14 +121,19 @@ public class HomeController {
 		String sessionId = (String) session.getAttribute("memberId");
 		String rfbnum = request.getParameter("rfbnum");
 		//사용자가 글리스트에서 클릭한 글의 번호
+	
 		
 		dao.rfbhit(rfbnum);	//조회수 증가
 		
 		RFBoardDto rfboardDto = dao.rfboardView(rfbnum);
 		ArrayList<RReplyDto> replyDtos =  dao.rrlist(rfbnum);
 		
+		FileDto fileDto = dao.getFileInfo(rfbnum);
+		
+		
 		model.addAttribute("rfbView", rfboardDto);
 		model.addAttribute("replylist", replyDtos);//해당 글에 달린 댓글 리스트
+		model.addAttribute("fileDto", fileDto);// 해당 글에 첨부된 파일의 모든 정보 dto 전송
 		
 		
 		
@@ -228,9 +238,12 @@ public class HomeController {
 		
 		
 		if(files.isEmpty())	{ // 파일의 첨부여부 확인
-			dao.rfbwrite(boardName, boardTitle, boardContent, sessionId);				
+			dao.rfbwrite(boardName, boardTitle, boardContent, sessionId, 0);				
 		} else {
-			dao.rfbwrite(boardName, boardTitle, boardContent, sessionId);
+			dao.rfbwrite(boardName, boardTitle, boardContent, sessionId, 1);
+			ArrayList<RFBoardDto> latestBoard = dao.boardLatestInfo(sessionId);
+			RFBoardDto dto = latestBoard.get(0);
+			int rfbnum = dto.getRfbnum();
 			
 			//파일첨부
 		String filoriename = files.getOriginalFilename(); // 첨부된파일의 원래 이름
@@ -240,22 +253,19 @@ public class HomeController {
 		String destinationFileName; // 실제 서버에 저장된 파일의 변경된 이름이 저장될 변수 선언
 		String fileurl ="D:/gyuseong/SpringBoot_warkspace/rubatoProject-2022.11.17-pend/src/main/resources/static/uploadfiles/";	// 서버의 절대경로로 써야한. 첨부된 파일이 저장될 서버의 실제 폴더 경로
 		
+		do {
 		destinationFileName =  RandomStringUtils.randomAlphabetic(32) + "." + fileextension; 
 		//알파벳대소문자와 숫자를 포함한 랜덤 32자 문자열 생성 후 .을 구분자로 원본 파일의 확장자를 연결->실제 서버에 저장될 파일의 이름
 		destinationFile = new File(fileurl+destinationFileName); 
+		}while(destinationFile.exists());
 		
 		destinationFile.getParentFile().mkdir();
-		files.transferTo(destinationFile);
+		files.transferTo(destinationFile);	// 업로드된 파일이 지정한 폴더로 이동 완료!
 		
-		
-		
+		dao.fileInfoInsert(rfbnum, filoriename, destinationFileName, fileextension, fileurl);
 		
 		}
 
-		
-
-		
-		
 		return "redirect:board_list";
 	}
 	
@@ -346,11 +356,39 @@ public class HomeController {
 		
 		model.addAttribute("boardList", boardDtos);
 		model.addAttribute("boardCount", boardDtos.size());// 검색 결과 게시물의 개수 반환
-		
-		
-		
-		
+			
 		return "board_list";
 	}
+	
+	
+	@RequestMapping(value = "file_down")
+	public String file_down(HttpServletRequest request, Model model, HttpServletResponse response) {
+		
+		String rfbnum = request.getParameter("rfbnum");	// 파일이 첨부된 원글 번호
+		
+		IDao dao = sqlSession.getMapper(IDao.class);
+		
+		FileDto fileDto = dao.getFileInfo(rfbnum);
+		
+		String filename = fileDto.getFilename();		
+		//model.addAttribute("filename", fileDto.getFilename());
+		
+		PrintWriter out;
+		try {
+			response.setContentType("text/html,charset=utf-8");
+			out = response.getWriter();
+			out.println("<script>window.location.href='/resources/uploadfiles/" + filename + "'</script>");
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return "redirect:board_list";
+	}
+	
+	
+	
+	
+	
 	
 }

@@ -16,10 +16,11 @@ public class RFBoardDto {
 	private String rfbname;
 	private String rfbtitle;
 	private String rfbcontent;
-	private int rfbhit;
-	private String rfbuserid;
-	private int rfbreplycount;
+	private int rfbhit;	//조휘수
+	private String rfbuserid;	// 글쓴이의 아이디
+	private int rfbreplycount; // 첨부된 댓글 개수
 	private String rfbdate;
+	private int filecount;	// 첨부된 파일 개수
 	
 	
 	
